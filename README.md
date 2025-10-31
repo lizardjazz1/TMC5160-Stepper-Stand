@@ -1,4 +1,4 @@
-# TMC5160 Motor Test Stand
+# TMC5160 Stepper Stand
 
 ESP32-based stepper motor test stand with TMC5160 driver control via web interface.
 
