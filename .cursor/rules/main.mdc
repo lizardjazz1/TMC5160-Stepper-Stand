@@ -1,0 +1,259 @@
+# ESP32 + TMC5160 Stepper Motor Control Project Rules
+
+## Project Overview
+This is an ESP32-based stepper motor control system using TMC5160 driver with web interface. The project combines embedded C++ programming, SPI communication, WiFi web server, and real-time motor control.
+
+## Core Technologies
+- **Hardware**: ESP32 (ESP32-D0WD-V3), TMC5160 stepper driver
+- **Libraries**: TMCStepper, ESPAsyncWebServer, ArduinoJson, LittleFS
+- **Communication**: SPI (TMC5160), WiFi AP (web interface)
+- **Language**: C++ (Arduino framework)
+
+## Code Architecture
+
+### File Structure
+```
+src/
+├── main.cpp          # Main application entry point
+├── tmc.cpp/.h        # TMC5160 driver control
+├── web_server.cpp/.h # Async web server and API
+├── pins.h            # GPIO pin definitions
+├── config.h          # Configuration constants
+└── api_types.h       # Data structures and presets
+
+data/
+└── index.html        # Web interface (served from LittleFS)
+```
+
+### Key Components
+- **TMC5160 Driver**: Autonomous positioning via SPI
+- **Web Server**: RESTful API for motor control
+- **Real-time Monitoring**: Position, speed, status tracking
+- **Motor Presets**: NEMA motor configurations
+
+## Coding Standards
+
+### C++ Style
+- Use `#pragma once` for header guards
+- Prefer `constexpr` for compile-time constants
+- Use `String` class for text operations
+- Follow Arduino naming conventions (camelCase for functions)
+
+### Memory Management
+- Use `JsonDocument` (not `DynamicJsonDocument`)
+- Limit log size to prevent memory overflow
+- Use `String` concatenation carefully (ESP32 has limited heap)
+
+### Error Handling
+- Always check TMC5160 communication before operations
+- Validate API parameters before processing
+- Log errors with descriptive messages
+- Graceful degradation when hardware fails
+
+## TMC5160 Specific Rules
+
+### Initialization Sequence
+1. Configure GPIO pins (CS, EN, STEP, DIR)
+2. Initialize SPI with `SPI.begin()`
+3. Create TMC5160Stepper object with correct sense resistor
+4. Call `driver.begin()` and verify communication via `IOIN()`
+5. Configure CHOPCONF, PWMCONF, and motion parameters
+6. Set RAMPMODE and initial positions
+
+### Communication Verification
+```cpp
+// Always verify communication before operations
+TMC5160_n::IOIN_i<TMC5160Stepper>::IOIN_t ioin{driver.IOIN()};
+if (ioin.version == 0xFF || ioin.version == 0) {
+    // Handle communication error
+}
+```
+
+### Motion Control
+- Use autonomous positioning mode (RAMPMODE = 0)
+- Set realistic VMAX values (scale user input by 200x)
+- Always check `position_reached()` before new movements
+- Use proper acceleration/deceleration curves
+
+## Web Server Rules
+
+### API Design
+- Use RESTful endpoints (`/api/status`, `/api/move`, etc.)
+- Return consistent JSON structure with `success` and `data` fields
+- Validate all input parameters
+- Provide meaningful error messages
+
+### Real-time Updates
+- Update status every 500ms via `/api/status`
+- Stream logs in real-time via `/api/logs`
+- Use async operations to prevent blocking
+
+### Security
+- No authentication required (local network only)
+- Validate all numeric inputs (min/max ranges)
+- Sanitize user input to prevent injection
+
+## Hardware Integration
+
+### Pin Configuration
+- CS_PIN: GPIO5 (Chip Select)
+- MOSI_PIN: GPIO23 (Master Out Slave In)
+- MISO_PIN: GPIO19 (Master In Slave Out)
+- SCK_PIN: GPIO18 (Serial Clock)
+- EN_PIN: GPIO21 (Enable, active LOW)
+- STEP_PIN: GPIO27 (not used in SPI mode)
+- DIR_PIN: GPIO22 (not used in SPI mode)
+
+### Power Management
+- TMC5160 requires 24V motor power
+- ESP32 uses 3.3V logic levels
+- Sense resistor: 0.033Ω (project specific)
+
+### Hardware Status (VERIFIED WORKING)
+- **Motor connection**: ✅ CORRECTLY CONNECTED
+- **TMC5160 power**: ✅ 24V SUPPLIED
+- **SPI connections**: ✅ ALL PINS CONNECTED
+- **Mellow Fly board**: ✅ CONFIRMED WORKING
+- **Previous firmware**: ✅ WAS WORKING (before AI rewrote code)
+- **Current issue**: SOFTWARE CONFIGURATION PROBLEM
+
+### Power Supply Configuration
+- **USB**: Used ONLY for firmware upload
+- **Laboratory power supply**: Used for normal operation
+- **Workflow**: Upload firmware via USB → Disconnect USB → Connect to lab power supply
+- **No Serial Monitor**: After USB disconnect, no serial debugging available
+- **LED indicators**: Use for status indication when no serial access
+
+## Performance Guidelines
+
+### Loop Optimization
+- Keep `loop()` execution under 10ms
+- Use `delay(10)` for main loop timing
+- Minimize blocking operations
+- Use async web server to prevent blocking
+
+### Memory Usage
+- Monitor heap usage (ESP32 has ~320KB RAM)
+- Limit log buffer size (10KB max)
+- Use efficient JSON serialization
+- Avoid String concatenation in loops
+
+## Debugging and Logging
+
+### Logging Strategy
+- Use `add_log()` for Serial output
+- Use `add_log_to_web()` for web interface
+- Include timestamps in web logs
+- Log all critical operations (init, move, error)
+
+### Diagnostic Information
+- Provide detailed TMC5160 register values
+- Show pin states and communication status
+- Include version information and configuration
+- Real-time position and speed monitoring
+
+## Testing and Validation
+
+### Hardware Testing
+- Verify SPI communication on startup
+- Test motor movement in both directions
+- Validate web interface functionality
+- Check emergency stop functionality
+
+### Software Testing
+- Test all API endpoints
+- Validate parameter ranges
+- Test error conditions
+- Verify real-time updates
+
+## Common Pitfalls to Avoid
+
+### TMC5160 Issues
+- Don't use STEP/DIR pins in SPI mode
+- Always verify communication before operations
+- Use correct sense resistor value (0.033Ω)
+- Set realistic speed values (not too high/low)
+- **CRITICAL**: Hardware is verified working - focus on software configuration
+- **CRITICAL**: Previous firmware worked - don't change working hardware setup
+
+### ESP32 Issues
+- Don't block the main loop
+- Monitor memory usage
+- Use proper WiFi AP configuration
+- Handle LittleFS initialization properly
+- **CRITICAL**: After USB disconnect, system runs on lab power supply only
+- **CRITICAL**: No serial debugging available in normal operation
+- **CRITICAL**: Must work autonomously without USB connection
+
+### Web Interface Issues
+- Don't hardcode status values
+- Always validate user input
+- Provide real-time feedback
+- Handle network disconnections gracefully
+
+## Documentation Requirements
+
+### Code Comments
+- Explain complex TMC5160 register operations
+- Document API endpoint purposes
+- Include hardware connection diagrams
+- Explain timing-critical operations
+
+### User Documentation
+- Provide setup instructions
+- Document motor presets
+- Explain web interface features
+- Include troubleshooting guide
+
+## Version Control
+
+### Commit Messages
+- Use conventional commit format
+- Include hardware/software changes
+- Reference issue numbers
+- Test before committing
+
+### Code Review
+- Verify TMC5160 communication
+- Test web interface functionality
+- Check memory usage
+- Validate error handling
+
+## Emergency Procedures
+
+### Safety Features
+- Emergency stop via web interface
+- Hardware enable pin control
+- Position monitoring and limits
+- Communication failure detection
+
+### Recovery Procedures
+- Automatic reconnection attempts
+- Position reset functionality
+- Configuration restoration
+- Error state recovery
+
+---
+
+## Quick Reference
+
+### Essential Functions
+- `setup_tmc5160()` - Initialize driver
+- `move_motor(steps)` - Move motor
+- `enable_motor()` / `disable_motor()` - Power control
+- `position_reached()` - Check movement status
+- `get_detailed_diagnostics()` - Hardware status
+
+### Key API Endpoints
+- `GET /api/status` - System status
+- `POST /api/move` - Move motor
+- `POST /api/enable` / `POST /api/disable` - Power control
+- `GET /api/diagnostic` - Hardware diagnostics
+- `GET /api/logs` - System logs
+
+### Critical Constants
+- Sense resistor: 0.033Ω
+- Default current: 1000mA
+- Default microsteps: 16
+- Default speed scale: 200x
+- Log buffer size: 10KB

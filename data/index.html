@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>TMC5160 Test Stand</title>
+    <style>
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .content { padding: 15px; }
+        
+        /* АДАПТИВНЫЙ ДИЗАЙН 📱💻 */
+        /* Планшеты (от 768px) */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            .container {
+                max-width: 750px;
+                margin: 0 auto;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            .content {
+                padding: 25px;
+            }
+        }
+        
+        /* Десктопы (от 1024px) */
+        @media (min-width: 1024px) {
+            body {
+                padding: 30px;
+            }
+            .container {
+                max-width: 900px;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            }
+            .content {
+                padding: 35px;
+            }
+        }
+        
+        /* Убираем status-card подложку, делаем плоским */
+        .status-card {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+        .status-card h2 { 
+            font-size: 1.1em; 
+            margin-bottom: 12px; 
+            color: #333; 
+            padding: 10px 0;
+            border-bottom: 2px solid #667eea;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 столбца × 2 строки! */
+            gap: 10px;
+        }
+        .status-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .status-item label { 
+            font-size: 0.85em; 
+            color: #666; 
+            display: block; 
+            margin-bottom: 5px; 
+        }
+        .status-item .value { 
+            font-size: 1.2em; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        .status-item .value.good { color: #28a745; }
+        .status-item .value.bad { color: #dc3545; }
+        
+        .control-section {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 15px;
+            border: none;
+        }
+        .control-section h3 {
+            font-size: 1.05em;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 столбца × 2 строки! */
+            gap: 10px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            min-width: 55px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.4);
+        }
+        .btn-emergency {
+            background: #ff0000;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            animation: pulse 2s infinite;
+        }
+        .btn-emergency:hover {
+            background: #cc0000;
+            transform: translateY(-2px);
+        }
+        
+        /* КРУГОВОЕ МЕНЮ С СЕГМЕНТАМИ (ПИЦЦА) 🍕 */
+        .angle-circle-container {
+            position: relative;
+            width: 410px;
+            height: 410px;
+            max-width: 90vw; /* НЕ БОЛЬШЕ 90% ширины экрана! */
+            max-height: 90vw; /* Сохраняем квадрат! */
+            margin: 30px auto;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .angle-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .angle-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            z-index: 1000;
+            border: 5px solid #fff;
+        }
+        .angle-center-label {
+            font-size: 0.7em;
+            opacity: 0.9;
+        }
+        .angle-center-value {
+            font-size: 1.4em;
+        }
+        /* Сегменты пиццы */
+        .angle-segment {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 160px;
+            height: 160px;
+            transform-origin: 100% 100%;
+            overflow: hidden;
+        }
+        .angle-segment button {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: rgba(102, 126, 234, 0.3);
+            color: transparent;
+            font-size: 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .angle-segment:nth-child(even) button {
+            background: rgba(102, 126, 234, 0.15);
+        }
+        .angle-segment button:hover {
+            background: rgba(102, 126, 234, 0.8);
+            color: white;
+        }
+        /* Отрицательные углы - немного другой оттенок */
+        .angle-segment.negative button {
+            background: rgba(118, 75, 162, 0.3);
+            color: #764ba2;
+        }
+        .angle-segment.negative:nth-child(even) button {
+            background: rgba(118, 75, 162, 0.15);
+        }
+        .angle-segment.negative button:hover {
+            background: rgba(118, 75, 162, 0.8);
+            color: white;
+        }
+        /* Позиции сегментов (16 штук по 22.5°) - РАЗВОРОТ +180° - 90° - 11.25° = +78.75° чтобы 0° смотрел на 0°! */
+        .angle-segment:nth-child(1) { transform: rotate(78.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(2) { transform: rotate(101.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(3) { transform: rotate(123.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(4) { transform: rotate(146.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(5) { transform: rotate(168.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(6) { transform: rotate(191.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(7) { transform: rotate(213.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(8) { transform: rotate(236.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(9) { transform: rotate(258.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(10) { transform: rotate(281.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(11) { transform: rotate(303.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(12) { transform: rotate(326.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(13) { transform: rotate(348.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(14) { transform: rotate(371.25deg) skew(67.5deg); }
+        .angle-segment:nth-child(15) { transform: rotate(393.75deg) skew(67.5deg); }
+        .angle-segment:nth-child(16) { transform: rotate(416.25deg) skew(67.5deg); }
+        
+        /* ЯРЛЫКИ СНАРУЖИ КРУГА */
+        .angle-label {
+            position: absolute;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #667eea;
+            pointer-events: none; /* Не мешаем кликам */
+            white-space: nowrap; /* Не переносим текст */
+        }
+        .angle-label.negative { color: #764ba2; }
+        
+        /* Мобильные: уменьшаем шрифт ярлыков */
+        @media (max-width: 480px) {
+            .angle-label {
+                font-size: 0.65em;
+            }
+        }
+        
+        /* Позиции ярлыков (radius = 180px от центра) */
+        .label-0 { left: 50%; top: calc(50% - 180px); transform: translate(-50%, -50%); }
+        .label-22-5 { left: calc(50% + 70px); top: calc(50% - 165px); transform: translate(-50%, -50%); }
+        .label-45 { left: calc(50% + 127px); top: calc(50% - 127px); transform: translate(-50%, -50%); }
+        .label-67-5 { left: calc(50% + 165px); top: calc(50% - 70px); transform: translate(-50%, -50%); }
+        .label-90 { left: calc(50% + 180px); top: 50%; transform: translate(-50%, -50%); }
+        .label-112-5 { left: calc(50% + 165px); top: calc(50% + 70px); transform: translate(-50%, -50%); }
+        .label-135 { left: calc(50% + 127px); top: calc(50% + 127px); transform: translate(-50%, -50%); }
+        .label-157-5 { left: calc(50% + 70px); top: calc(50% + 165px); transform: translate(-50%, -50%); }
+        .label-180 { left: 50%; top: calc(50% + 180px); transform: translate(-50%, -50%); }
+        .label-minus-157-5 { left: calc(50% - 70px); top: calc(50% + 165px); transform: translate(-50%, -50%); }
+        .label-minus-135 { left: calc(50% - 127px); top: calc(50% + 127px); transform: translate(-50%, -50%); }
+        .label-minus-112-5 { left: calc(50% - 165px); top: calc(50% + 70px); transform: translate(-50%, -50%); }
+        .label-minus-90 { left: calc(50% - 180px); top: 50%; transform: translate(-50%, -50%); }
+        .label-minus-67-5 { left: calc(50% - 165px); top: calc(50% - 70px); transform: translate(-50%, -50%); }
+        .label-minus-45 { left: calc(50% - 127px); top: calc(50% - 127px); transform: translate(-50%, -50%); }
+        .label-minus-22-5 { left: calc(50% - 70px); top: calc(50% - 165px); transform: translate(-50%, -50%); }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.4);
+        }
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(23, 162, 184, 0.4);
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 193, 7, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.4);
+        }
+        .btn-preset {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        .btn-preset:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-preset small {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .message.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .message.show { display: block; }
+        
+        .diagnostic-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+            display: none;
+        }
+        .diagnostic-output.show { display: block; }
+        
+        /* Мобильные оптимизации */
+        @media (max-width: 1024px) {
+            .container { max-width: 720px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        button {
+                width: 100%;
+            }
+            body { padding: 10px; }
+            .content { padding: 16px; }
+            .control-section { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Заголовок и подзаголовок удалены по требованию -->
+        
+        <div class="content">
+            <!-- Статус -->
+            <div class="status-card">
+                <h2>📊 Текущий статус</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <label>Инициализация</label>
+                        <div class="value" id="status-init">❌ НЕТ</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Драйвер</label>
+                        <div class="value" id="status-enabled">❌ ВЫКЛ</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Движение</label>
+                        <div class="value" id="status-moving">⏸️ НЕТ</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Позиция (шаги)</label>
+                        <div class="value" id="status-position">0</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Скорость (шаги/с)</label>
+                        <div class="value" id="status-speed">0.0</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Осталось</label>
+                        <div class="value" id="status-remaining">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Единое меню настроек + пресеты -->
+            <div class="control-section">
+                <h3>⚙️ Настройки движения и драйвера</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="preset_select">Пресет</label>
+                        <select id="preset_select"></select>
+                    </div>
+                    <!-- Режим управления фиксирован: Motion Controller (SPI) -->
+                    <div class="form-group">
+                        <label for="max_speed">Макс. скорость (шаги/с)</label>
+                        <input type="number" id="max_speed" value="1000" min="1" max="50000">
+                    </div>
+                    <div class="form-group">
+                        <label for="acceleration">Ускорение (шаги/с²)</label>
+                        <input type="number" id="acceleration" value="500" min="1" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label for="deceleration">Торможение (шаги/с²)</label>
+                        <input type="number" id="deceleration" value="500" min="1" max="10000">
+                    </div>
+                    <div class="form-group">
+                        <label for="steps_per_rev">Шагов на оборот</label>
+                        <input type="number" id="steps_per_rev" value="200" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="driver_current">Ток (mA)</label>
+                        <input type="number" id="driver_current" value="800" min="100" max="3000">
+                    </div>
+                    <div class="form-group">
+                        <label for="driver_hold_mult">Hold Multiplier</label>
+                        <input type="number" id="driver_hold_mult" value="0.5" step="0.1" min="0" max="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="driver_microsteps">Микрошаги</label>
+                        <select id="driver_microsteps">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="4">4</option>
+                            <option value="8">8</option>
+                            <option value="16" selected>16</option>
+                            <option value="32">32</option>
+                            <option value="64">64</option>
+                            <option value="128">128</option>
+                            <option value="256">256</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-success" onclick="saveSettings()">💾 Сохранить настройки</button>
+                </div>
+            </div>
+
+            <!-- Кнопки включения/выключения мотора -->
+            <div class="button-group">
+                <button class="btn-success" onclick="enableMotor()">🔋 Включить мотор (HOLD)</button>
+                <button class="btn-secondary" onclick="disableMotor()">⚡ Выключить мотор</button>
+            </div>
+
+            <!-- Количество шагов и направление ПЕРЕД кнопками старт/стоп -->
+            <div class="control-section">
+                <h3>🎯 Управление движением</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="steps">Количество шагов</label>
+                        <input type="number" id="steps" value="200" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="direction">Направление</label>
+                        <select id="direction">
+                            <option value="forward">▶️ Вперёд</option>
+                            <option value="backward">◀️ Назад</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gear_ratio" title="Редуктор/ремень: 3.0 = 1:3, 0.333 = 3:1">⚙️ Передаточное число</label>
+                        <input type="number" id="gear_ratio" value="1.0" step="0.01" min="0.01" max="100">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn-secondary" onclick="saveGearRatio()" style="width: 100%; padding: 8px;">💾 Сохранить</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основные кнопки управления -->
+            <div class="button-group">
+                <button class="btn-primary" onclick="moveMotor()">🚀 Старт</button>
+                <button class="btn-danger" onclick="stopMotor()">⏹️ Стоп</button>
+                <button class="btn-success" onclick="resetPosition()">🔄 Сброс</button>
+            </div>
+
+            <!-- Круговое меню с сегментами (пицца) -->
+            <h3 style="margin-top: 20px;">🔄 Повороты по углам</h3>
+            <div class="angle-circle-container">
+                <!-- Центр с текущей позицией -->
+                <div class="angle-center">
+                    <div class="angle-center-label">Позиция</div>
+                    <div class="angle-center-value" id="angle-position">0°</div>
+                </div>
+                
+                <!-- Сегменты (16 штук по 22.5° каждый) -->
+                <ul class="angle-circle">
+                    <li class="angle-segment"><button onclick="moveAngleNew(0)">0°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(22.5)">+22.5°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(45)">+45°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(67.5)">+67.5°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(90)">+90°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(112.5)">+112.5°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(135)">+135°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(157.5)">+157.5°</button></li>
+                    <li class="angle-segment"><button onclick="moveAngleNew(180)">±180°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-157.5)">-157.5°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-135)">-135°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-112.5)">-112.5°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-90)">-90°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-67.5)">-67.5°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-45)">-45°</button></li>
+                    <li class="angle-segment negative"><button onclick="moveAngleNew(-22.5)">-22.5°</button></li>
+                </ul>
+                
+                <!-- ЯРЛЫКИ СНАРУЖИ КРУГА -->
+                <div class="angle-label label-0">0°</div>
+                <div class="angle-label label-22-5">+22.5°</div>
+                <div class="angle-label label-45">+45°</div>
+                <div class="angle-label label-67-5">+67.5°</div>
+                <div class="angle-label label-90">+90°</div>
+                <div class="angle-label label-112-5">+112.5°</div>
+                <div class="angle-label label-135">+135°</div>
+                <div class="angle-label label-157-5">+157.5°</div>
+                <div class="angle-label label-180">±180°</div>
+                <div class="angle-label negative label-minus-157-5">-157.5°</div>
+                <div class="angle-label negative label-minus-135">-135°</div>
+                <div class="angle-label negative label-minus-112-5">-112.5°</div>
+                <div class="angle-label negative label-minus-90">-90°</div>
+                <div class="angle-label negative label-minus-67-5">-67.5°</div>
+                <div class="angle-label negative label-minus-45">-45°</div>
+                <div class="angle-label negative label-minus-22-5">-22.5°</div>
+            </div>
+
+            <!-- Сообщения -->
+            <div id="message" class="message"></div>
+        </div>
+        
+        <!-- Логи -->
+        <div class="status-card">
+            <h2>📋 Логи системы</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <p style="margin: 0; color: #666;">Реальные данные из ESP32</p>
+                <button class="btn-secondary" onclick="clearLogs()" style="padding: 5px 10px; font-size: 0.9em;">🗑️ Очистить</button>
+            </div>
+            <div id="logs-container" style="background: #1e1e1e; color: #00ff00; font-family: 'Courier New', monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; white-space: pre-wrap; font-size: 12px;">
+                <div id="logs-content">Загрузка логов...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // ============================================================================
+        // API КЛИЕНТ (современный подход с async/await)
+        // ============================================================================
+        
+        const API = {
+            async request(endpoint, method = 'GET', data = null) {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                };
+                
+                if (data && method === 'POST') {
+                    options.body = new URLSearchParams(data).toString();
+                }
+                
+                try {
+                    const response = await fetch(endpoint, options);
+                    const json = await response.json();
+                    return json;
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: 'Ошибка сети: ' + error.message
+                    };
+                }
+            },
+            
+            // === ОСНОВНЫЕ API ENDPOINTS ===
+            async getStatus() {
+                return await this.request('/api/status');
+            },
+            
+            async diagnostic() {
+                return await this.request('/api/diagnostic');
+            },
+            
+            async getDetailedDiagnostics() {
+                return await this.request('/api/detailed_diagnostics');
+            },
+            
+            async getLogs() {
+                return await this.request('/api/logs');
+            },
+            
+            async clearLogs() {
+                return await this.request('/api/logs/clear', 'POST');
+            },
+            async getPresets() {
+                return await this.request('/api/presets');
+            },
+            async applyPreset(preset_id) {
+                return await this.request('/api/apply_preset', 'POST', { preset_id });
+            },
+            
+            // === УПРАВЛЕНИЕ ДВИГАТЕЛЕМ ===
+            async enable() {
+                return await this.request('/api/enable', 'POST');
+            },
+
+            async disable() {
+                return await this.request('/api/disable', 'POST');
+            },
+            
+            async move(params) {
+                return await this.request('/api/move', 'POST', params);
+            },
+            
+            async moveAngle(params) {
+                return await this.request('/api/move_angle', 'POST', params);
+            },
+            
+            async moveFromCenter(params) {
+                return await this.request('/api/move_from_center', 'POST', params);
+            },
+            
+            async stop() {
+                return await this.request('/api/stop', 'POST');
+            },
+            
+            async emergencyStop() {
+                return await this.request('/api/emergency_stop', 'POST');
+            },
+            
+            async reset() {
+                return await this.request('/api/reset', 'POST');
+            },
+            
+            // === ПРЕСЕТЫ УДАЛЕНЫ - используйте ручную настройку ===
+        };
+        
+        // ============================================================================
+        // UI УПРАВЛЕНИЕ
+        // ============================================================================
+        
+        function showMessage(text, type = 'success') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type + ' show';
+            setTimeout(() => msg.classList.remove('show'), 5000);
+        }
+        
+        // ======== Форм-хелперы: состояние, дебаунс, защита от перезаписи ========
+        const formState = {
+            dirty: new Set(),
+            setDirty(id, isDirty) {
+                if (isDirty) this.dirty.add(id); else this.dirty.delete(id);
+            },
+            isDirty(id) { return this.dirty.has(id); }
+        };
+
+        function debounce(fn, delay = 400) {
+            let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+        }
+
+        function setIfNotFocused(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (document.activeElement === el) return; // не перезаписывать во время ввода
+            if (formState.isDirty(id)) return;         // у пользователя несохранённые правки
+            if (value !== undefined && value !== null && value !== '') el.value = value;
+        }
+
+        function updateStatus(data) {
+            if (!data || !data.success || !data.data) return;
+            
+            const s = data.data;
+            
+            // Статус инициализации
+            document.getElementById('status-init').textContent = s.initialized ? '✅ ДА' : '❌ НЕТ';
+            document.getElementById('status-init').className = 'value ' + (s.initialized ? 'good' : 'bad');
+            
+            // Статус драйвера
+            document.getElementById('status-enabled').textContent = s.enabled ? '✅ ВКЛ' : '❌ ВЫКЛ';
+            document.getElementById('status-enabled').className = 'value ' + (s.enabled ? 'good' : 'bad');
+            
+            // Движение
+            document.getElementById('status-moving').textContent = s.is_moving ? '▶️ ДА' : '⏸️ НЕТ';
+            document.getElementById('status-moving').className = 'value ' + (s.is_moving ? 'good' : '');
+            
+            // Позиция (ТОЛЬКО ШАГИ, БЕЗ ГРАДУСОВ!)
+            document.getElementById('status-position').textContent = s.current_position;
+            
+            // Обновляем центральный индикатор углового интерфейса
+            const degrees = ((s.current_position % 200) / 200 * 360).toFixed(0);
+            const anglePos = document.getElementById('angle-position');
+            if (anglePos) {
+                anglePos.textContent = degrees + '°';
+            }
+            
+            // Скорость
+            document.getElementById('status-speed').textContent = s.current_speed.toFixed(2);
+            
+            // Осталось
+            document.getElementById('status-remaining').textContent = s.steps_remaining;
+            
+            // Обновляем поля формы реальными данными (без перезаписи во время ввода)
+            if (s.settings) {
+                setIfNotFocused('max_speed', s.settings.max_speed);
+                setIfNotFocused('acceleration', s.settings.acceleration);
+                setIfNotFocused('deceleration', s.settings.deceleration);
+                setIfNotFocused('driver_current', s.settings.current_mA);
+                setIfNotFocused('driver_hold_mult', s.settings.hold_multiplier);
+                setIfNotFocused('steps_per_rev', s.settings.steps_per_rev);
+                setIfNotFocused('gear_ratio', s.settings.gear_ratio || 1.0); // Передаточное число!
+                
+                // select не редактируется печатью, но всё же обновим, если значение пришло
+                if (s.settings.microsteps !== undefined && s.settings.microsteps !== null) {
+                    const el = document.getElementById('driver_microsteps');
+                    if (el && document.activeElement !== el && !formState.isDirty('driver_microsteps')) el.value = s.settings.microsteps;
+                }
+            }
+        }
+
+        // ======== Инициализация слушателей ввода и авто-сохранение настроек ========
+        const fieldsToGuard = [
+            'driver_current', 'driver_hold_mult', 'driver_microsteps',
+            'max_speed', 'acceleration', 'deceleration', 'steps_per_rev',
+            // также защитим параметры движения, чтобы не сбрасывались во время ввода
+            'steps', 'direction'
+        ];
+
+        const debouncedSaveSettings = debounce(async () => {
+            // сохраняем настройки драйвера/кинематики
+            const payload = {
+                current_mA: document.getElementById('driver_current').value,
+                hold_multiplier: document.getElementById('driver_hold_mult').value,
+                microsteps: document.getElementById('driver_microsteps').value,
+                max_speed: document.getElementById('max_speed').value,
+                acceleration: document.getElementById('acceleration').value,
+                deceleration: document.getElementById('deceleration').value,
+                steps_per_rev: document.getElementById('steps_per_rev').value
+            };
+            try {
+                await fetch('/api/save_settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(payload).toString()
+                });
+            } catch (_) { /* тихо игнорируем сетевые ошибки при авто-сохранении */ }
+        }, 600);
+
+        function attachGuards() {
+            fieldsToGuard.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+
+                // помечаем поле грязным при вводе (БЕЗ автосохранения!)
+                el.addEventListener('input', () => {
+                    formState.setDirty(id, true);
+                    // Переключаем на "Custom" если изменили настройки вручную
+                    if (['driver_current', 'driver_hold_mult', 'driver_microsteps', 
+                         'max_speed', 'acceleration', 'deceleration', 'steps_per_rev'].includes(id)) {
+                        switchToCustomOnEdit();
+                    }
+                });
+
+                // При потере фокуса НЕ сохраняем - только по кнопке!
+                // НЕ снимаем dirty флаг - он снимется только после нажатия кнопки
+                el.addEventListener('blur', () => {
+                    // Ничего не делаем - сохранение только по кнопке
+                });
+            });
+        }
+
+        // ======== Пресеты: загрузка, выбор, автозаполнение ========
+        let presetData = [];  // Глобальное хранилище пресетов
+        
+        async function loadPresets() {
+            const sel = document.getElementById('preset_select');
+            if (!sel) return;
+            const res = await API.getPresets();
+            if (!res || !res.success || !res.data) return;
+            
+            presetData = res.data;  // Сохраняем для быстрого доступа
+            
+            sel.innerHTML = '';
+            
+            // Добавляем "Custom" в начало
+            const customOpt = document.createElement('option');
+            customOpt.value = 'custom';
+            customOpt.textContent = '🔧 Custom (свои настройки)';
+            sel.appendChild(customOpt);
+            
+            // Добавляем пресеты
+            res.data.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = String(p.id);
+                opt.textContent = p.name + ` (${p.current_mA}mA, ${p.microsteps}µ)`;
+                sel.appendChild(opt);
+            });
+            
+            // Автозагрузка при выборе пресета
+            sel.addEventListener('change', () => {
+                if (sel.value !== 'custom') {
+                    fillFromPresetLocal();
+                }
+            });
+            
+            // По умолчанию выбираем Custom (текущие настройки с ESP32)
+            sel.value = 'custom';
+        }
+
+        function fillFromPresetLocal() {
+            const sel = document.getElementById('preset_select');
+            const id = parseInt(sel.value || '0', 10);
+            
+            const p = presetData.find(x => x.id === id);
+            if (!p) return;
+            
+            // ЗАПОЛНЯЕМ ВСЕ ПОЛЯ (принудительно, игнорируя dirty state)
+            document.getElementById('driver_current').value = p.current_mA;
+            document.getElementById('driver_microsteps').value = p.microsteps;
+            document.getElementById('max_speed').value = p.max_speed;
+            document.getElementById('acceleration').value = p.acceleration;
+            document.getElementById('deceleration').value = p.deceleration;
+            document.getElementById('driver_hold_mult').value = p.hold_mult;
+            document.getElementById('steps_per_rev').value = p.steps_per_rev;
+            
+            // Сбрасываем dirty state для всех полей
+            fieldsToGuard.forEach(id => formState.setDirty(id, false));
+            
+            showMessage(`✅ Пресет "${p.name}" загружен!`, 'success');
+        }
+        
+        // Автоматическое переключение на "Custom" при ручном изменении
+        function switchToCustomOnEdit() {
+            const sel = document.getElementById('preset_select');
+            if (sel && sel.value !== 'custom') {
+                sel.value = 'custom';
+            }
+        }
+
+        // Функция для принудительного обновления полей (игнорируя dirty state)
+        function forceUpdateField(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (value !== undefined && value !== null && value !== '') {
+                el.value = value;
+                formState.setDirty(id, false); // Сбрасываем dirty state
+            }
+        }
+
+        async function applyPreset() {
+            const sel = document.getElementById('preset_select');
+            const id = parseInt(sel.value || '0', 10);
+            
+            // ТОЛЬКО загружаем данные пресета (БЕЗ сохранения в EEPROM!)
+            const res = await API.getPresets();
+            if (!res.success || !res.data) {
+                showMessage('❌ Ошибка загрузки пресетов', 'error');
+                return;
+            }
+            
+            const preset = res.data.find(p => p.id === id);
+            if (!preset) {
+                showMessage('❌ Пресет не найден', 'error');
+                return;
+            }
+            
+            // Заполняем форму значениями из пресета
+            forceUpdateField('driver_current', preset.current_mA);
+            forceUpdateField('driver_hold_mult', preset.hold_mult);
+            forceUpdateField('driver_microsteps', preset.microsteps);
+            forceUpdateField('max_speed', preset.max_speed);
+            forceUpdateField('acceleration', preset.acceleration);
+            forceUpdateField('deceleration', preset.deceleration);
+            forceUpdateField('steps_per_rev', preset.steps_per_rev);
+            
+            showMessage('✅ Пресет "' + preset.name + '" загружен в форму. Нажмите "Сохранить настройки" для применения.', 'success');
+        }
+        
+        // ============================================================================
+        // КОМАНДЫ
+        // ============================================================================
+        
+        async function moveMotor() {
+            // ТОЛЬКО ДВИЖЕНИЕ! Не включаем мотор автоматически
+            let steps = parseInt(document.getElementById('steps').value);
+            const direction = document.getElementById('direction').value;
+            
+            // ИСПРАВЛЕНИЕ: backward = отрицательные шаги!
+            if (direction === 'backward') {
+                steps = -steps;
+            }
+            
+            const params = {
+                steps: steps, // Передаём со знаком!
+                max_speed: document.getElementById('max_speed').value,
+                acceleration: document.getElementById('acceleration').value,
+                deceleration: document.getElementById('deceleration').value,
+                driver_current: document.getElementById('driver_current').value,
+                driver_microsteps: document.getElementById('driver_microsteps').value,
+                mech_steps_per_rev: document.getElementById('steps_per_rev').value
+            };
+            
+            const result = await API.move(params);
+            
+            if (result.success) {
+                showMessage(result.message, 'success');
+            } else {
+                showMessage(result.message, 'error');
+            }
+            
+            updateStatusLoop();
+        }
+        
+        async function stopMotor() {
+            const result = await API.stop();
+            showMessage(result.message, result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+        
+        async function enableMotor() {
+            const result = await API.enable();
+            showMessage(result.message || '✅ Мотор включен (удержание)', result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+
+        async function disableMotor() {
+            const result = await API.disable();
+            showMessage(result.message || '⚡ Мотор выключен', result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+
+        async function resetPosition() {
+            const result = await API.reset();
+            showMessage(result.message, result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+
+        // НОВАЯ ФУНКЦИЯ: moveAngleNew(signedAngle)
+        // signedAngle: +45 = ПО часовой, -45 = ПРОТИВ часовой, 0 или ±180 = особые
+        async function moveAngleNew(signedAngle) {
+            // Рассчитываем количество шагов: 200 шагов = 360°
+            const stepsPerFullRotation = 200; // Базовые шаги мотора
+            const gearRatio = parseFloat(document.getElementById('gear_ratio').value) || 1.0;
+            
+            // Учитываем передаточное число!
+            const steps = Math.round((signedAngle / 360.0) * stepsPerFullRotation * gearRatio);
+            
+            // steps уже со знаком! (+ или -)
+            const params = {
+                steps: steps,
+                max_speed: document.getElementById('max_speed').value,
+                acceleration: document.getElementById('acceleration').value,
+                deceleration: document.getElementById('deceleration').value
+            };
+            
+            const result = await API.move(params);
+            showMessage(result.message, result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+        
+        // Сохранение передаточного числа в EEPROM
+        async function saveGearRatio() {
+            const gearRatio = parseFloat(document.getElementById('gear_ratio').value);
+            
+            if (isNaN(gearRatio) || gearRatio <= 0) {
+                showMessage('❌ Некорректное передаточное число!', 'error');
+                return;
+            }
+            
+            const params = new URLSearchParams();
+            params.append('gear_ratio', gearRatio);
+            
+            const result = await API.request('/api/save_gear_ratio', 'POST', params.toString());
+            showMessage(result.message || '✅ Передаточное число сохранено!', result.success ? 'success' : 'error');
+        }
+        
+        // Старая функция (оставляем для совместимости)
+        async function moveAngle(angle, direction) {
+            const stepsPerFullRotation = 200;
+            let steps = Math.round((angle / 360.0) * stepsPerFullRotation);
+            if (direction === 'backward') {
+                steps = -steps;
+            }
+            const params = {
+                steps: steps,
+                max_speed: document.getElementById('max_speed').value,
+                acceleration: document.getElementById('acceleration').value,
+                deceleration: document.getElementById('deceleration').value
+            };
+            const result = await API.move(params);
+            showMessage(result.message, result.success ? 'success' : 'error');
+            updateStatusLoop();
+        }
+
+        // ❌ moveFromCenter удалён - оставлены только базовые функции
+
+        // Функция пресетов удалена - используйте ручную настройку параметров
+
+        // Аварийная отмена
+        async function emergencyStop() {
+            if (confirm('🚨 ВЫ УВЕРЕНЫ? Это немедленно обесточит мотор!')) {
+                const result = await API.emergencyStop();
+                showMessage(result.message, result.success ? 'success' : 'error');
+                updateStatusLoop();
+            }
+        }
+
+        // ❌ Диагностика, VACTUAL и STEP/DIR функции удалены - используем только Motion Controller
+
+        async function saveSettings() {
+            showMessage('💾 Сохранение настроек...', 'success');
+            try {
+                const params = {
+                    current_mA: document.getElementById('driver_current').value,
+                    hold_multiplier: document.getElementById('driver_hold_mult').value,
+                    microsteps: document.getElementById('driver_microsteps').value,
+                    max_speed: document.getElementById('max_speed').value,
+                    acceleration: document.getElementById('acceleration').value,
+                    deceleration: document.getElementById('deceleration').value,
+                    steps_per_rev: document.getElementById('steps_per_rev').value
+                };
+
+                const response = await fetch('/api/save_settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(params).toString()
+                });
+
+                const result = await response.json();
+                showMessage(result.message, result.success ? 'success' : 'error');
+
+                if (result.success) {
+                    // Сбрасываем dirty state для всех полей после успешного сохранения
+                    ['driver_current', 'driver_hold_mult', 'driver_microsteps',
+                     'max_speed', 'acceleration', 'deceleration', 'steps_per_rev'].forEach(id => {
+                        formState.setDirty(id, false);
+                    });
+                }
+            } catch (error) {
+                showMessage('❌ Ошибка сохранения настроек: ' + error.message, 'error');
+            }
+        }
+        
+        // ============================================================================
+        // АВТО-ОБНОВЛЕНИЕ СТАТУСА
+        // ============================================================================
+        
+        let statusInterval = null;
+        
+        async function updateStatusLoop() {
+            const result = await API.getStatus();
+            if (result.success) {
+                updateStatus(result);
+            }
+        }
+        
+        // Запуск авто-обновления каждые 500ms
+        statusInterval = setInterval(updateStatusLoop, 500);
+        
+        // Первое обновление сразу
+        updateStatusLoop();
+        // Инициализация защит для полей формы
+        attachGuards();
+        // Загрузка пресетов для единого меню
+        loadPresets();
+        
+        // === ЛОГИ ===
+        let logsInterval = null;
+        
+        async function updateLogs() {
+            try {
+                const result = await API.getLogs();
+                if (result.success) {
+                    document.getElementById('logs-content').textContent = result.data;
+                } else {
+                    document.getElementById('logs-content').textContent = 'Ошибка загрузки логов: ' + result.message;
+                }
+                // Автоскролл вниз
+                const logsContainer = document.getElementById('logs-container');
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                document.getElementById('logs-content').textContent = 'Ошибка сети: ' + error.message;
+            }
+        }
+        
+        async function clearLogs() {
+            try {
+                const result = await API.clearLogs();
+                if (result.success) {
+                    showMessage('✅ Логи очищены', 'success');
+                } else {
+                    showMessage('❌ Ошибка очистки логов: ' + result.message, 'error');
+                }
+                updateLogs();
+            } catch (error) {
+                console.error('Error clearing logs:', error);
+                showMessage('❌ Ошибка сети при очистке логов', 'error');
+            }
+        }
+        
+        // Запуск авто-обновления логов каждые 1 секунду
+        logsInterval = setInterval(updateLogs, 1000);
+        
+        // Первое обновление логов сразу
+        updateLogs();
+    </script>
+</body>
+
+</html>
