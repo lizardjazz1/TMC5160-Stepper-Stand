@@ -1,9 +1,8 @@
 # TMC5160 Stepper Stand
 
-ESP32-based stepper motor test stand with TMC5160 driver control via web interface.
+**[🇷🇺 Русская версия](README_RU.md)** | **[🇬🇧 English](README.md)**
 
-![Main Interface](docs/images/main_interface.png)
-*Main web interface with circular angle control*
+ESP32-based stepper motor test stand with TMC5160 driver control via web interface.
 
 ## 🎯 Features
 
@@ -20,8 +19,21 @@ ESP32-based stepper motor test stand with TMC5160 driver control via web interfa
 
 ### Circular Angle Control (16 segments × 22.5°)
 
-![Circular Control](docs/images/circular_control.png)
-*Pizza-style circular angle selector with 16 segments*
+```
+                  0°
+                  🔵
+                  
+      -45°               +45°
+       🟣                   🔵
+         
+   -90° 🟣────────●────────🔵 +90°
+         
+       🟣                   🔵
+      -135°             +135°
+      
+                 🔵
+                ±180°
+```
 
 - **Positive angles (+)** - Clockwise rotation (blue segments)
 - **Negative angles (-)** - Counter-clockwise rotation (purple segments)
@@ -35,9 +47,6 @@ ESP32-based stepper motor test stand with TMC5160 driver control via web interfa
 - **TMC5160 driver** - **Mellow Fly 24V/48V HV TMC5160 Pro V1.5**
 - **Stepper motor** (NEMA 8/14/17/23)
 - **Power supply** (24-48V for TMC5160 HV version)
-
-![Hardware Setup](docs/images/hardware_setup.png)
-*ESP32 connected to TMC5160 Pro V1.5 driver*
 
 ### Wiring (TMC5160 SPI Mode)
 
@@ -74,8 +83,8 @@ pip install platformio
 
 ### 2. Clone and Build
 ```bash
-git clone https://github.com/lizardjazz1/TMC5160-Test-Stand.git
-cd TMC5160-Test-Stand
+git clone https://github.com/lizardjazz1/TMC5160-Stepper-Stand.git
+cd TMC5160-Stepper-Stand
 pio run -t upload
 pio run -t uploadfs
 ```
@@ -208,10 +217,4 @@ MIT License - feel free to use and modify!
 ## 📧 Support
 
 For issues and questions, please open an issue on GitHub.
-
----
-
-**Made with ❤️ for stepper motor testing**
-
-[🇷🇺 Русская документация](README_RU.md)
 
