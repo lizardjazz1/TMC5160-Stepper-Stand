@@ -7,15 +7,56 @@
 #include "eeprom_manager.h"
 #include "api_types.h"
 #include "pins.h"
+#include "solenoid.h"
+#include "hall_sensors.h"
 
 AsyncWebServer server(80);
 
 // Глобальный лог для системы
 String system_logs = "";
 
+// Функция форматирования времени (миллисекунды в формат MM:SS.mmm)
+String format_time_ms(unsigned long ms) {
+    unsigned long seconds = ms / 1000;
+    unsigned long minutes = seconds / 60;
+    seconds = seconds % 60;
+    unsigned long milliseconds = ms % 1000;
+    
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "%02lu:%02lu.%03lu", minutes, seconds, milliseconds);
+    return String(buffer);
+}
+
+// Функция замены смайликов на текстовые метки
+String replace_emojis(String message) {
+    message.replace("✅", "[OK]");
+    message.replace("❌", "[ERROR]");
+    message.replace("⚠️", "[WARN]");
+    message.replace("🚀", "[MOVE]");
+    message.replace("🔄", "[SWITCH]");
+    message.replace("🔧", "[CONFIG]");
+    message.replace("🔋", "[ENABLE]");
+    message.replace("🔌", "[DISABLE]");
+    message.replace("📊", "[INFO]");
+    message.replace("🎯", "[CENTER]");
+    message.replace("🚨", "[STOP]");
+    message.replace("💾", "[SAVE]");
+    message.replace("⚙️", "[SETTINGS]");
+    message.replace("⏹️", "[STOP]");
+    message.replace("🧪", "[TEST]");
+    message.replace("🛑", "[STOP]");
+    message.replace("⏱️", "[TIME]");
+    message.replace("🔢", "[CYCLES]");
+    message.replace("🧹", "[CLEAR]");
+    return message;
+}
+
 // Функция добавления в лог (объявлена в tmc.h)
 void add_log_to_web(String message) {
-    system_logs += "[" + String(millis()) + "] " + message + "\n";
+    // Форматируем время и убираем смайлики
+    String formatted_time = format_time_ms(millis());
+    String clean_message = replace_emojis(message);
+    system_logs += "[" + formatted_time + "] " + clean_message + "\n";
     
     // Ограничиваем размер лога (обрезаем по строкам, а не по символам)
     if (system_logs.length() > 10000) {
@@ -64,6 +105,24 @@ String getStatusJson() {
     settings["microsteps"] = currentSettings.microsteps;
     settings["gear_ratio"] = currentSettings.gear_ratio;  // Передаточное число!
     settings["stealthchop"] = false;  // Всегда SpreadCycle для тестового стенда
+    settings["stallguard_threshold"] = currentSettings.stallguard_threshold;
+    
+    // Данные о соленоиде
+    JsonObject solenoid = data["solenoid"].to<JsonObject>();
+    solenoid["state"] = get_solenoid_state();
+    solenoid["switching"] = is_solenoid_switching();
+    solenoid["testing"] = is_solenoid_testing();
+    solenoid["enabled"] = is_solenoid_enabled();
+    solenoid["current_mA"] = get_solenoid_current_mA(24.0, 30.0); // 24V питание, 30 Ом сопротивление (можно настроить)
+    
+    // Данные о датчиках Холла
+    bool hall1 = read_hall_sensor_1();
+    bool hall2 = read_hall_sensor_2();
+    JsonObject hall_sensors = data["hall_sensors"].to<JsonObject>();
+    hall_sensors["sensor1"]["active"] = hall1;
+    hall_sensors["sensor1"]["state"] = hall1 ? "MAGNET_DETECTED" : "NO_MAGNET";
+    hall_sensors["sensor2"]["active"] = hall2;
+    hall_sensors["sensor2"]["state"] = hall2 ? "MAGNET_DETECTED" : "NO_MAGNET";
     
     String response;
     serializeJson(doc, response);
@@ -610,6 +669,17 @@ void init_web_server() {
         request->send(200, "application/json", response);
     });
 
+    // API: Скачать логи как текстовый файл
+    server.on("/api/logs/download", HTTP_GET, [](AsyncWebServerRequest *request) {
+        // Генерируем имя файла с текущей датой/временем (в миллисекундах от старта)
+        String filename = "logs_" + String(millis()) + ".txt";
+        
+        // Отправляем логи как plain text с заголовком для скачивания
+        AsyncWebServerResponse *response = request->beginResponse(200, "text/plain; charset=utf-8", system_logs);
+        response->addHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        request->send(response);
+    });
+
     // ❌ STEP/DIR тест удалён - используем только Motion Controller (SPI) режим
 
     // API: Сохранить настройки в EEPROM
@@ -693,6 +763,219 @@ void init_web_server() {
             serializeJson(doc, response);
             request->send(400, "application/json", response);
         }
+    });
+
+    // API: Управление соленоидом - переключить в состояние A
+    server.on("/api/solenoid/switch_a", HTTP_POST, [](AsyncWebServerRequest *request) {
+        uint16_t duration = 100; // По умолчанию 100ms
+        if (request->hasParam("duration", true)) {
+            duration = request->getParam("duration", true)->value().toInt();
+            if (duration < 50) duration = 50;   // Минимум 50ms
+            if (duration > 500) duration = 500; // Максимум 500ms
+        }
+        
+        solenoid_switch_to_a(duration);
+        add_log("🔌 Solenoid switched to state A (duration: " + String(duration) + "ms)");
+        add_log_to_web("🔌 Solenoid switched to state A");
+        
+        JsonDocument doc;
+        doc["success"] = true;
+        doc["message"] = "Solenoid switched to state A";
+        doc["duration_ms"] = duration;
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    // API: Управление соленоидом - переключить в состояние B
+    server.on("/api/solenoid/switch_b", HTTP_POST, [](AsyncWebServerRequest *request) {
+        uint16_t duration = 100; // По умолчанию 100ms
+        if (request->hasParam("duration", true)) {
+            duration = request->getParam("duration", true)->value().toInt();
+            if (duration < 50) duration = 50;   // Минимум 50ms
+            if (duration > 500) duration = 500; // Максимум 500ms
+        }
+        
+        solenoid_switch_to_b(duration);
+        add_log("🔌 Solenoid switched to state B (duration: " + String(duration) + "ms)");
+        add_log_to_web("🔌 Solenoid switched to state B");
+        
+        JsonDocument doc;
+        doc["success"] = true;
+        doc["message"] = "Solenoid switched to state B";
+        doc["duration_ms"] = duration;
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    // API: Получить состояние соленоида
+    server.on("/api/solenoid/status", HTTP_GET, [](AsyncWebServerRequest *request) {
+        JsonDocument doc;
+        doc["success"] = true;
+        doc["state"] = get_solenoid_state();
+        doc["switching"] = is_solenoid_switching();
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    // API: Получить состояние датчиков Холла
+    server.on("/api/hall_sensors", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String response = get_hall_sensors_json();
+        request->send(200, "application/json", response);
+    });
+
+    // API: Ручной режим с проверкой доворота
+    server.on("/api/solenoid/switch_with_check", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (!request->hasParam("direction", true) || !request->hasParam("hall_sensor", true)) {
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["message"] = "Missing parameters: direction, hall_sensor";
+            String response; serializeJson(doc, response);
+            request->send(400, "application/json", response);
+            return;
+        }
+        
+        uint8_t direction = request->getParam("direction", true)->value().toInt(); // 0 = A, 1 = B
+        uint8_t hall_sensor = request->getParam("hall_sensor", true)->value().toInt(); // 1 или 2
+        uint16_t duration = request->hasParam("duration", true) ? 
+                           request->getParam("duration", true)->value().toInt() : 100;
+        uint16_t timeout = request->hasParam("timeout", true) ? 
+                          request->getParam("timeout", true)->value().toInt() : 500;
+        
+        // Синхронная проверка
+        bool success = false;
+        
+        // Переключаем
+        if (direction == 0) {
+            solenoid_switch_to_a(duration);
+        } else {
+            solenoid_switch_to_b(duration);
+        }
+        
+        // Ждем завершения импульса
+        unsigned long wait_start = millis();
+        while (is_solenoid_switching() && (millis() - wait_start < duration + 100)) {
+            delay(10);
+        }
+        delay(50); // Стабилизация
+        
+        // Проверяем датчик
+        unsigned long check_start = millis();
+        while ((millis() - check_start) < timeout) {
+            bool sensor_state = (hall_sensor == 1) ? read_hall_sensor_1() : read_hall_sensor_2();
+            if (sensor_state) {
+                success = true;
+                break;
+            }
+            delay(10);
+        }
+        
+        String pos_name = direction == 0 ? "A (+90°)" : "B (-90°)";
+        String sensor_name = hall_sensor == 1 ? "Датчик 1" : "Датчик 2";
+        add_log("🔌 Переключение в " + pos_name + ", проверка " + sensor_name + ": " + String(success ? "✅ Магнит найден" : "❌ Магнит не найден"));
+        add_log_to_web("🔌 " + pos_name + " → " + String(success ? "✅ Магнит на месте" : "❌ Магнит не обнаружен"));
+        
+        JsonDocument doc;
+        doc["success"] = success;
+        doc["message"] = success ? "Датчик сработал" : "Датчик не сработал";
+        doc["direction"] = direction;
+        doc["hall_sensor"] = hall_sensor;
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    // API: Запустить тест (неблокирующий, работает в фоне)
+    server.on("/api/solenoid/start_test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (!request->hasParam("direction", true) || !request->hasParam("test_duration", true)) {
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["message"] = "Missing parameters: direction, test_duration";
+            String response; serializeJson(doc, response);
+            request->send(400, "application/json", response);
+            return;
+        }
+        
+        uint8_t direction = request->getParam("direction", true)->value().toInt(); // 0 = A, 1 = B, 2 = оба
+        uint16_t test_duration = request->getParam("test_duration", true)->value().toInt();
+        uint16_t cooldown_ms = request->hasParam("cooldown_ms", true) ? 
+                              request->getParam("cooldown_ms", true)->value().toInt() : 0;
+        uint8_t hall_sensor = request->hasParam("hall_sensor", true) ? 
+                             request->getParam("hall_sensor", true)->value().toInt() : 1;
+        uint8_t max_attempts = request->hasParam("max_attempts", true) ? 
+                              request->getParam("max_attempts", true)->value().toInt() : 3;
+        uint8_t max_failures = request->hasParam("max_failures", true) ? 
+                              request->getParam("max_failures", true)->value().toInt() : 5;
+        uint32_t max_time_ms = request->hasParam("max_time_sec", true) ? 
+                              request->getParam("max_time_sec", true)->value().toInt() * 1000UL : 0;
+        uint32_t max_cycles = request->hasParam("max_cycles", true) ? 
+                             request->getParam("max_cycles", true)->value().toInt() : 0;
+        
+        // Проверяем, не идет ли уже тест
+        if (is_solenoid_testing()) {
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["message"] = "Тест уже запущен";
+            String response; serializeJson(doc, response);
+            request->send(400, "application/json", response);
+            return;
+        }
+        
+        // Проверяем, не движется ли мотор
+        if (tmc_initialized && motor_enabled) {
+            int32_t vactual = (int32_t)motor.readRegister(TMC5160_Reg::VACTUAL);
+            if (abs(vactual) > 10) {
+                JsonDocument doc;
+                doc["success"] = false;
+                doc["message"] = "Мотор движется, остановите перед тестом";
+                String response; serializeJson(doc, response);
+                request->send(400, "application/json", response);
+                return;
+            }
+        }
+        
+        // Запускаем тест
+        solenoid_test_mode(direction, test_duration, cooldown_ms, hall_sensor, max_attempts, max_failures, max_time_ms, max_cycles);
+        
+        String test_mode = direction == 2 ? "A ⇄ B" : (direction == 0 ? "Только A" : "Только B");
+        add_log_to_web("🧪 Тест соленоида запущен: " + test_mode);
+        
+        JsonDocument doc;
+        doc["success"] = true;
+        doc["message"] = "Тест запущен";
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+    });
+
+    // API: Остановить тест
+    server.on("/api/solenoid/stop_test", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (!is_solenoid_testing()) {
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["message"] = "Тест не запущен";
+            String response; serializeJson(doc, response);
+            request->send(400, "application/json", response);
+            return;
+        }
+        
+        solenoid_stop_test();
+        add_log_to_web("🛑 Тест остановлен");
+        
+        JsonDocument doc;
+        doc["success"] = true;
+        doc["message"] = "Тест остановлен";
+        
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
     });
 
     // Статические файлы из LittleFS

@@ -226,9 +226,9 @@ void move_motor_steps(int32_t steps, MotorControlMode mode) {
                 delay_us = min_delay;
             }
             
-            digitalWrite(STEP_PIN, HIGH);
+        digitalWrite(STEP_PIN, HIGH);
             delayMicroseconds(delay_us);
-            digitalWrite(STEP_PIN, LOW);
+        digitalWrite(STEP_PIN, LOW);
             delayMicroseconds(delay_us);
         }
         add_log("✅ Completed: " + String(abs_steps) + " steps");
@@ -351,10 +351,10 @@ void update_center_sequence() {
 bool position_reached() {
     if (!tmc_initialized) return true;
     if (!motor_enabled) return true;  // Если мотор выключен, считаем что достигли цели
-    
+
     // Проверяем ТОЛЬКО скорость (не позицию, т.к. после stop() target не сбрасывается)
     int32_t vactual = motor.getCurrentSpeed();
-    
+
     // Если скорость = 0, значит НЕ движется
     return (abs(vactual) < 1);
 }
@@ -402,9 +402,9 @@ String get_detailed_diagnostics() {
     if (!tmc_initialized) {
         return "TMC5160 not initialized";
     }
-
+    
     String diag = "=== TMC5160 DETAILED DIAGNOSTICS ===\n\n";
-
+    
     // 1. GSTAT анализ (как в Config Wizard)
     TMC5160_Reg::GSTAT_Register gstat = {0};
     gstat.value = motor.readRegister(TMC5160_Reg::GSTAT);
@@ -516,7 +516,7 @@ String get_current_diagnostics() {
     diag += "GLOBAL_SCALER: " + String(globalScaler) + "\n";
     diag += "R_SENSE: " + String(TMC5160_RSENSE, 3) + " Ω\n";
     diag += "Calculated I_RMS: " + String(get_motor_current()) + " mA\n";
-
+    
     return diag;
 }
 

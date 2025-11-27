@@ -7,6 +7,8 @@
 #include "eeprom_manager.h"
 #include "LittleFS.h"
 #include <EEPROM.h>
+#include "solenoid.h"
+#include "hall_sensors.h"
 
 // SPI Motion Controller - никаких extern переменных!
 void handleClient(); // Объявление функции из web_server.cpp
@@ -67,6 +69,16 @@ void setup() {
     digitalWrite(STEP_PIN, LOW);
     digitalWrite(DIR_PIN, LOW);
 
+    // === ИНИЦИАЛИЗАЦИЯ СОЛЕНОИДА ===
+    Serial.println("Initializing solenoid (L298N)...");
+    init_solenoid();
+    Serial.println("✅ Solenoid initialized");
+
+    // === ИНИЦИАЛИЗАЦИЯ ДАТЧИКОВ ХОЛЛА ===
+    Serial.println("Initializing Hall sensors...");
+    init_hall_sensors();
+    Serial.println("✅ Hall sensors initialized");
+
     // === ИНИЦИАЛИЗАЦИЯ TMC5160 (SPI инициализируется в setup_tmc5160) ===
     Serial.println("=== TMC5160 INITIALIZATION ===");
 
@@ -91,6 +103,15 @@ void setup() {
 void loop() {
     // Мониторинг TMC5160
     run_motor();
+
+    // Проверка состояния соленоида (завершение импульса)
+    is_solenoid_switching();
+    
+    // Обработка неблокирующей проверки датчиков
+    solenoid_check_loop();
+    
+    // Обработка автоматического теста соленоида
+    solenoid_test_loop();
 
     // Обрабатываем веб-запросы
     handleClient();

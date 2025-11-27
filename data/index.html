@@ -27,12 +27,12 @@
         /* Планшеты (от 768px) */
         @media (min-width: 768px) {
             body {
-                padding: 20px;
-            }
-            .container {
+            padding: 20px;
+        }
+        .container {
                 max-width: 750px;
-                margin: 0 auto;
-                border-radius: 16px;
+            margin: 0 auto;
+            border-radius: 16px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             }
             .content {
@@ -43,7 +43,7 @@
         /* Десктопы (от 1024px) */
         @media (min-width: 1024px) {
             body {
-                padding: 30px;
+            padding: 30px;
             }
             .container {
                 max-width: 900px;
@@ -52,6 +52,38 @@
             .content {
                 padding: 35px;
             }
+        }
+        
+        /* ========== ВКЛАДКИ ========== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            color: #667eea;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         
         /* Убираем status-card подложку, делаем плоским */
@@ -409,6 +441,22 @@
             margin-top: 20px;
             display: none;
         }
+        .log-line {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .log-success {
+            color: #4ec9b0;
+        }
+        .log-error {
+            color: #f48771;
+        }
+        .log-warning {
+            color: #dcdcaa;
+        }
+        .log-info {
+            color: #569cd6;
+        }
         .message.success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
@@ -441,7 +489,7 @@
             .container { max-width: 720px; }
             .form-grid { grid-template-columns: 1fr; }
         }
-
+        
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -464,6 +512,15 @@
         <!-- Заголовок и подзаголовок удалены по требованию -->
         
         <div class="content">
+            <!-- Вкладки -->
+            <div class="tabs">
+                <button class="tab active" data-tab="stepper" onclick="switchTab('stepper', this)">🔧 Шаговый двигатель</button>
+                <button class="tab" data-tab="solenoid" onclick="switchTab('solenoid', this)">🔌 Соленоид</button>
+            </div>
+
+            <!-- Вкладка 1: Шаговый двигатель -->
+            <div id="tab-stepper" class="tab-content active">
+            
             <!-- Статус -->
             <div class="status-card">
                 <h2>📊 Текущий статус</h2>
@@ -511,18 +568,18 @@
                     <div class="form-group">
                         <label for="acceleration">Ускорение (шаги/с²)</label>
                         <input type="number" id="acceleration" value="500" min="1" max="10000">
-                    </div>
+        </div>
                     <div class="form-group">
                         <label for="deceleration">Торможение (шаги/с²)</label>
                         <input type="number" id="deceleration" value="500" min="1" max="10000">
-                    </div>
+        </div>
                     <div class="form-group">
                         <label for="steps_per_rev">Шагов на оборот</label>
                         <input type="number" id="steps_per_rev" value="200" min="1">
                     </div>
                     <div class="form-group">
                         <label for="driver_current">Ток (mA)</label>
-                        <input type="number" id="driver_current" value="800" min="100" max="3000">
+            <input type="number" id="driver_current" value="800" min="100" max="3000">
                     </div>
                     <div class="form-group">
                         <label for="driver_hold_mult">Hold Multiplier</label>
@@ -530,21 +587,21 @@
                     </div>
                     <div class="form-group">
                         <label for="driver_microsteps">Микрошаги</label>
-                        <select id="driver_microsteps">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="4">4</option>
-                            <option value="8">8</option>
-                            <option value="16" selected>16</option>
-                            <option value="32">32</option>
-                            <option value="64">64</option>
-                            <option value="128">128</option>
-                            <option value="256">256</option>
-                        </select>
+            <select id="driver_microsteps">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+                <option value="16" selected>16</option>
+                <option value="32">32</option>
+                <option value="64">64</option>
+                <option value="128">128</option>
+                <option value="256">256</option>
+            </select>
                     </div>
                 </div>
-                <div class="button-group">
-                    <button class="btn-success" onclick="saveSettings()">💾 Сохранить настройки</button>
+            <div class="button-group">
+                <button class="btn-success" onclick="saveSettings()">💾 Сохранить настройки</button>
                 </div>
             </div>
 
@@ -561,21 +618,21 @@
                     <div class="form-group">
                         <label for="steps">Количество шагов</label>
                         <input type="number" id="steps" value="200" min="1">
-                    </div>
+            </div>
                     <div class="form-group">
                         <label for="direction">Направление</label>
                         <select id="direction">
                             <option value="forward">▶️ Вперёд</option>
                             <option value="backward">◀️ Назад</option>
                         </select>
-                    </div>
+            </div>
                     <div class="form-group">
                         <label for="gear_ratio" title="Редуктор/ремень: 3.0 = 1:3, 0.333 = 3:1">⚙️ Передаточное число</label>
                         <input type="number" id="gear_ratio" value="1.0" step="0.01" min="0.01" max="100">
-                    </div>
+            </div>
                     <div class="form-group" style="display: flex; align-items: flex-end;">
                         <button class="btn-secondary" onclick="saveGearRatio()" style="width: 100%; padding: 8px;">💾 Сохранить</button>
-                    </div>
+            </div>
                 </div>
             </div>
 
@@ -593,8 +650,8 @@
                 <div class="angle-center">
                     <div class="angle-center-label">Позиция</div>
                     <div class="angle-center-value" id="angle-position">0°</div>
-                </div>
-                
+        </div>
+
                 <!-- Сегменты (16 штук по 22.5° каждый) -->
                 <ul class="angle-circle">
                     <li class="angle-segment"><button onclick="moveAngleNew(0)">0°</button></li>
@@ -636,20 +693,158 @@
 
             <!-- Сообщения -->
             <div id="message" class="message"></div>
+            
+        </div>
+            <!-- Конец вкладки Шаговый двигатель -->
+        
+            <!-- Вкладка 2: Соленоид -->
+            <div id="tab-solenoid" class="tab-content">
+
+            <!-- Датчики Холла -->
+        <div class="status-card">
+                <h2>🧲 Датчики Холла</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <label>Датчик 1</label>
+                        <div class="value" id="hall-sensor1">❌ НЕТ МАГНИТА</div>
+                    </div>
+                    <div class="status-item">
+                        <label>Датчик 2</label>
+                        <div class="value" id="hall-sensor2">❌ НЕТ МАГНИТА</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Управление соленоидом -->
+            <div class="control-section">
+                <h3>🔌 Управление бистабильным соленоидом</h3>
+                <div class="form-group">
+                    <label for="solenoid_duration">Длительность импульса (мс)</label>
+                    <input type="number" id="solenoid_duration" value="100" min="50" max="500" step="10">
+                </div>
+                <div class="button-group">
+                    <button class="btn-success" onclick="switchSolenoidA()">🔌 Переключить в состояние A</button>
+                    <button class="btn-primary" onclick="switchSolenoidB()">🔌 Переключить в состояние B</button>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Текущее состояние соленоида</label>
+                    <div class="value" id="solenoid-state">unknown</div>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Ток через обмотку</label>
+                    <div class="value" id="solenoid-current">0 mA</div>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Статус включения (ENA)</label>
+                    <div class="value" id="solenoid-enabled">Выключен</div>
+                </div>
+            </div>
+
+            <!-- Ручной режим с проверкой положения -->
+            <div class="control-section">
+                <h3>🔧 Ручной режим с проверкой положения</h3>
+                <div style="background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9em;">
+                    <strong>💡 Как работает:</strong><br>
+                    • Соленоид: +90° (A) или -90° (B)<br>
+                    • Магнит на валу: датчики ловят север<br>
+                    • Датчик 1 → магнит в позиции A (+90°)<br>
+                    • Датчик 2 → магнит в позиции B (-90°)
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="manual_direction">Куда крутить?</label>
+                        <select id="manual_direction">
+                            <option value="0">В позицию A (+90°) → Датчик 1</option>
+                            <option value="1">В позицию B (-90°) → Датчик 2</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="manual_timeout">Таймаут проверки (мс)</label>
+                        <input type="number" id="manual_timeout" value="500" min="100" max="2000" step="50">
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-success" onclick="manualSwitchWithCheck()">🔧 Переключить и проверить</button>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Результат последней проверки</label>
+                    <div class="value" id="manual-check-result">-</div>
+                </div>
+            </div>
+
+            <!-- Автоматический тест -->
+            <div class="control-section">
+                <h3>🧪 Автоматический тест</h3>
+                <div style="background: #fff7e6; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9em;">
+                    <strong>⚙️ Тест проверяет:</strong><br>
+                    • A → B → A → B (бесконечный цикл)<br>
+                    • После каждого переключения проверяет соответствующий датчик<br>
+                    • Если не сработал → меняет полярность и пробует снова
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_duration" style="font-size: 0.85em; line-height: 1.3;">Задержка<br>между поворотами (мс)</label>
+                            <input type="number" id="test_duration" value="1000" min="100" max="10000" step="100" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_cooldown" style="font-size: 0.85em; line-height: 1.3;">Время отдыха<br>(мс, защита от перегрева)</label>
+                            <input type="number" id="test_cooldown" value="0" min="0" max="60000" step="100" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_max_attempts" style="font-size: 0.85em; line-height: 1.3;">Макс. попыток<br>на поворот</label>
+                            <input type="number" id="test_max_attempts" value="3" min="1" max="10" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_max_failures" style="font-size: 0.85em; line-height: 1.3;">Макс. последовательных<br>неудач (защита от клина)</label>
+                            <input type="number" id="test_max_failures" value="5" min="1" max="20" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_max_time" style="font-size: 0.85em; line-height: 1.3;">Макс. время теста<br>(сек, 0 = бесконечно)</label>
+                            <input type="number" id="test_max_time" value="0" min="0" max="3600" step="1" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="test_max_cycles" style="font-size: 0.85em; line-height: 1.3;">Макс. количество<br>циклов (0 = бесконечно)</label>
+                            <input type="number" id="test_max_cycles" value="0" min="0" max="10000" step="1" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-success" onclick="startSolenoidTest()">🧪 Запустить тест</button>
+                    <button class="btn-danger" onclick="stopSolenoidTest()">⏹️ Остановить тест</button>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Статус теста</label>
+                    <div class="value" id="test-status">⏸️ Остановлен</div>
+                </div>
+                <div class="status-item" style="margin-top: 10px;">
+                    <label>Примечание</label>
+                    <div style="font-size: 0.9em; color: #666;">Тест выполняется в фоне, результаты в логах. Можно остановить в любой момент.</div>
+                </div>
+            </div>
+            
+            </div>
+            <!-- Конец вкладки Соленоид -->
+              <!-- Общее окно логов (внутри основного container, после content) -->
+        <div class="content" style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 20px;">
+            <div class="status-card">
+                <h2>📋 Логи системы</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <p style="margin: 0; color: #666;">Данные микроконтроллера</p>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-secondary" onclick="downloadLogs()" style="padding: 5px 10px; font-size: 0.9em;">Скачать</button>
+                        <button class="btn-secondary" onclick="clearLogs()" style="padding: 5px 10px; font-size: 0.9em;">Очистить</button>
+                    </div>
+                </div>
+                <div id="logs" class="logs-container" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
+                    <div class="log-line" style="color: #999;">Ожидание данных...</div>
+                </div>
+            </div>
         </div>
         
-        <!-- Логи -->
-        <div class="status-card">
-            <h2>📋 Логи системы</h2>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <p style="margin: 0; color: #666;">Реальные данные из ESP32</p>
-                <button class="btn-secondary" onclick="clearLogs()" style="padding: 5px 10px; font-size: 0.9em;">🗑️ Очистить</button>
-            </div>
-            <div id="logs-container" style="background: #1e1e1e; color: #00ff00; font-family: 'Courier New', monospace; padding: 15px; border-radius: 8px; height: 300px; overflow-y: auto; white-space: pre-wrap; font-size: 12px;">
-                <div id="logs-content">Загрузка логов...</div>
-            </div>
-        </div>
     </div>
+    <!-- Конец основного container -->
+        </div>
+        
 
     <script>
 
@@ -776,7 +971,7 @@
             if (formState.isDirty(id)) return;         // у пользователя несохранённые правки
             if (value !== undefined && value !== null && value !== '') el.value = value;
         }
-
+        
         function updateStatus(data) {
             if (!data || !data.success || !data.data) return;
             
@@ -810,6 +1005,53 @@
             // Осталось
             document.getElementById('status-remaining').textContent = s.steps_remaining;
             
+            // Датчики Холла
+            if (s.hall_sensors) {
+                const hall1 = s.hall_sensors.sensor1;
+                const hall2 = s.hall_sensors.sensor2;
+                
+                const hall1El = document.getElementById('hall-sensor1');
+                const hall2El = document.getElementById('hall-sensor2');
+                
+                if (hall1El) {
+                    hall1El.textContent = hall1.active ? '✅ МАГНИТ ОБНАРУЖЕН' : '❌ НЕТ МАГНИТА';
+                    hall1El.className = 'value ' + (hall1.active ? 'good' : '');
+                }
+                if (hall2El) {
+                    hall2El.textContent = hall2.active ? '✅ МАГНИТ ОБНАРУЖЕН' : '❌ НЕТ МАГНИТА';
+                    hall2El.className = 'value ' + (hall2.active ? 'good' : '');
+                }
+            }
+            
+            // Соленоид
+            if (s.solenoid) {
+                const solenoidStateEl = document.getElementById('solenoid-state');
+                if (solenoidStateEl) {
+                    solenoidStateEl.textContent = s.solenoid.state || 'unknown';
+                    solenoidStateEl.className = 'value ' + (s.solenoid.switching ? 'bad' : 'good');
+                }
+                
+                const solenoidCurrentEl = document.getElementById('solenoid-current');
+                if (solenoidCurrentEl) {
+                    const current_mA = s.solenoid.current_mA || 0;
+                    solenoidCurrentEl.textContent = current_mA > 0 ? current_mA + ' mA' : '0 mA (выключен)';
+                    solenoidCurrentEl.className = 'value ' + (current_mA > 0 ? 'good' : '');
+                }
+                
+                const solenoidEnabledEl = document.getElementById('solenoid-enabled');
+                if (solenoidEnabledEl) {
+                    const enabled = s.solenoid.enabled || false;
+                    solenoidEnabledEl.textContent = enabled ? 'Включен (ENA=HIGH)' : 'Выключен (ENA=LOW)';
+                    solenoidEnabledEl.className = 'value ' + (enabled ? 'good' : '');
+                }
+                
+                const testStatusEl = document.getElementById('test-status');
+                if (testStatusEl) {
+                    testStatusEl.textContent = s.solenoid.testing ? '🔄 Запущен' : '⏸️ Остановлен';
+                    testStatusEl.className = 'value ' + (s.solenoid.testing ? 'good' : '');
+                }
+            }
+            
             // Обновляем поля формы реальными данными (без перезаписи во время ввода)
             if (s.settings) {
                 setIfNotFocused('max_speed', s.settings.max_speed);
@@ -825,6 +1067,28 @@
                     const el = document.getElementById('driver_microsteps');
                     if (el && document.activeElement !== el && !formState.isDirty('driver_microsteps')) el.value = s.settings.microsteps;
                 }
+            }
+        }
+
+        // ======== Переключение вкладок ========
+        function switchTab(tabName, buttonElement) {
+            // Скрываем все вкладки
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Убираем активный класс со всех кнопок
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Показываем нужную вкладку
+            const targetTab = document.getElementById('tab-' + tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Активируем кнопку
+            if (buttonElement) {
+                buttonElement.classList.add('active');
             }
         }
 
@@ -1067,7 +1331,129 @@
             showMessage(result.message, result.success ? 'success' : 'error');
             updateStatusLoop();
         }
-        
+
+        // Управление соленоидом
+        async function switchSolenoidA() {
+            const duration = parseInt(document.getElementById('solenoid_duration').value) || 100;
+            try {
+                const response = await fetch('/api/solenoid/switch_a', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ duration: duration }).toString()
+                });
+                const result = await response.json();
+                showMessage(result.message || '🔌 Соленоид переключен в состояние A', result.success ? 'success' : 'error');
+                updateStatusLoop();
+            } catch (error) {
+                showMessage('❌ Ошибка управления соленоидом: ' + error.message, 'error');
+            }
+        }
+
+        async function switchSolenoidB() {
+            const duration = parseInt(document.getElementById('solenoid_duration').value) || 100;
+            try {
+                const response = await fetch('/api/solenoid/switch_b', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ duration: duration }).toString()
+                });
+                const result = await response.json();
+                showMessage(result.message || '🔌 Соленоид переключен в состояние B', result.success ? 'success' : 'error');
+            updateStatusLoop();
+            } catch (error) {
+                showMessage('❌ Ошибка управления соленоидом: ' + error.message, 'error');
+            }
+        }
+
+        async function manualSwitchWithCheck() {
+            const direction = parseInt(document.getElementById('manual_direction').value);
+            // Датчик соответствует направлению: A (0) → датчик 1, B (1) → датчик 2
+            const hall_sensor = direction === 0 ? 1 : 2;
+            const duration = parseInt(document.getElementById('solenoid_duration').value) || 100;
+            const timeout = parseInt(document.getElementById('manual_timeout').value) || 500;
+            
+            try {
+                const response = await fetch('/api/solenoid/switch_with_check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        direction: direction,
+                        hall_sensor: hall_sensor,
+                        duration: duration,
+                        timeout: timeout
+                    }).toString()
+                });
+                const result = await response.json();
+                
+                const resultEl = document.getElementById('manual-check-result');
+                if (resultEl) {
+                    resultEl.textContent = result.success ? '✅ Датчик сработал' : '❌ Датчик не сработал';
+                    resultEl.className = 'value ' + (result.success ? 'good' : 'bad');
+                }
+                
+                showMessage(result.message || (result.success ? '✅ Датчик сработал' : '❌ Датчик не сработал'), 
+                           result.success ? 'success' : 'error');
+                updateStatusLoop();
+            } catch (error) {
+                showMessage('❌ Ошибка: ' + error.message, 'error');
+            }
+        }
+
+        async function startSolenoidTest() {
+            const direction = 2; // Всегда A⇄B по очереди
+            const test_duration = parseInt(document.getElementById('test_duration').value);
+            const cooldown_ms = parseInt(document.getElementById('test_cooldown').value) || 0;
+            const max_attempts = parseInt(document.getElementById('test_max_attempts').value) || 3;
+            const max_failures = parseInt(document.getElementById('test_max_failures').value) || 5;
+            const max_time_sec = parseInt(document.getElementById('test_max_time').value) || 0;
+            const max_cycles = parseInt(document.getElementById('test_max_cycles').value) || 0;
+            
+            // Показываем сообщение о начале теста
+            showMessage('🧪 Запуск теста...', 'info');
+            
+            try {
+                const params = new URLSearchParams({
+                    direction: direction,
+                    test_duration: test_duration,
+                    cooldown_ms: cooldown_ms,
+                    max_attempts: max_attempts,
+                    max_failures: max_failures
+                });
+                
+                if (max_time_sec > 0) {
+                    params.append('max_time_sec', max_time_sec);
+                }
+                if (max_cycles > 0) {
+                    params.append('max_cycles', max_cycles);
+                }
+                
+                const response = await fetch('/api/solenoid/start_test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+                const result = await response.json();
+                showMessage(result.message || '🧪 Тест запущен', result.success ? 'success' : 'error');
+                updateStatusLoop();
+            } catch (error) {
+                showMessage('❌ Ошибка запуска теста: ' + error.message, 'error');
+            }
+        }
+
+        async function stopSolenoidTest() {
+            try {
+                const response = await fetch('/api/solenoid/stop_test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                const result = await response.json();
+                showMessage(result.message || '⏹️ Тест остановлен', result.success ? 'success' : 'error');
+                updateStatusLoop();
+            } catch (error) {
+                showMessage('❌ Ошибка остановки теста: ' + error.message, 'error');
+            }
+        }
+
         // Сохранение передаточного числа в EEPROM
         async function saveGearRatio() {
             const gearRatio = parseFloat(document.getElementById('gear_ratio').value);
@@ -1179,21 +1565,72 @@
         // === ЛОГИ ===
         let logsInterval = null;
         
+        // Функция форматирования и отображения логов
+        function renderLogs(logsElement, logData) {
+            if (!logData || logData.trim() === '') {
+                logsElement.innerHTML = '<div class="log-line log-warning">Ожидание данных...</div>';
+                return;
+            }
+            
+            // Форматируем логи как консоль - разбиваем по строкам
+            const lines = logData.split('\n').filter(line => line.trim() !== '');
+            
+            if (lines.length === 0) {
+                logsElement.innerHTML = '<div class="log-line log-warning">Логи пусты</div>';
+                return;
+            }
+            
+            // Сохраняем позицию скролла перед обновлением
+            const wasScrolledToBottom = logsElement.scrollHeight - logsElement.scrollTop <= logsElement.clientHeight + 10;
+            
+            logsElement.innerHTML = lines.map(line => {
+                // Добавляем цветовую подсветку для разных типов сообщений
+                let className = 'log-line';
+                if (line.includes('[OK]') || line.includes('успешно') || line.includes('success')) {
+                    className += ' log-success';
+                } else if (line.includes('[ERROR]') || line.includes('ошибка') || line.includes('error')) {
+                    className += ' log-error';
+                } else if (line.includes('[WARN]') || line.includes('warning') || line.includes('WARNING')) {
+                    className += ' log-warning';
+                } else if (line.includes('[MOVE]') || line.includes('[SWITCH]') || line.includes('[INFO]') || line.includes('Movement')) {
+                    className += ' log-info';
+                }
+                return '<div class="' + className + '">' + escapeHtml(line) + '</div>';
+            }).join('');
+            
+            // Автоскролл вниз только если пользователь был внизу
+            if (wasScrolledToBottom) {
+                setTimeout(() => {
+                    logsElement.scrollTop = logsElement.scrollHeight;
+                }, 0);
+            }
+        }
+        
         async function updateLogs() {
             try {
                 const result = await API.getLogs();
-                if (result.success) {
-                    document.getElementById('logs-content').textContent = result.data;
+                const logsElement = document.getElementById('logs');
+                
+                if (!logsElement) return;
+                
+                if (result.success && result.data) {
+                    renderLogs(logsElement, result.data);
                 } else {
-                    document.getElementById('logs-content').textContent = 'Ошибка загрузки логов: ' + result.message;
+                    logsElement.innerHTML = '<div class="log-line log-warning">Ожидание данных...</div>';
                 }
-                // Автоскролл вниз
-                const logsContainer = document.getElementById('logs-container');
-                logsContainer.scrollTop = logsContainer.scrollHeight;
             } catch (error) {
                 console.error('Error fetching logs:', error);
-                document.getElementById('logs-content').textContent = 'Ошибка сети: ' + error.message;
+                const logsElement = document.getElementById('logs');
+                if (logsElement) {
+                    logsElement.innerHTML = '<div class="log-line log-error">Ошибка сети: ' + escapeHtml(error.message) + '</div>';
+                }
             }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         async function clearLogs() {
@@ -1208,6 +1645,38 @@
             } catch (error) {
                 console.error('Error clearing logs:', error);
                 showMessage('❌ Ошибка сети при очистке логов', 'error');
+            }
+        }
+        
+        async function downloadLogs() {
+            try {
+                showMessage('💾 Скачивание логов...', 'info');
+                
+                // Скачиваем логи как текстовый файл
+                const response = await fetch('/api/logs/download');
+                if (!response.ok) {
+                    throw new Error('Ошибка скачивания: ' + response.status);
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Генерируем имя файла с текущей датой/временем
+                const now = new Date();
+                const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                a.download = `logs_${timestamp}.txt`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('✅ Логи скачаны', 'success');
+            } catch (error) {
+                console.error('Error downloading logs:', error);
+                showMessage('❌ Ошибка скачивания логов: ' + error.message, 'error');
             }
         }
         
